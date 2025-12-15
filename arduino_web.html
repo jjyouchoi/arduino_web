@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Teachable Machine to Arduino (Bluetooth)</title>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image"></script>
+<style>
+body { font-family: sans-serif; text-align: center; padding: 20px; }
+video { width: 300px; height: 225px; margin-bottom: 10px; }
+button { font-size: 16px; padding: 10px; margin: 10px; }
+</style>
+</head>
+<body>
+<h2>Teachable Machine to Arduino (via Bluetooth)</h2>
+<video id="webcam" autoplay playsinline muted></video>
+<div>
+<button onclick="connectBluetooth()">🔵 블루투스 연결</button>
+</div>
+<div id="status">모델 로딩 중...</div>
+
+
+<script>
+const MODEL_URL = "https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/"; // <-- 여기에 모델 ID 입력
+let model, webcam, maxPredictions;
+let port, writer;
+
+
+async function connectBluetooth() {
+try {
+port = await navigator.serial.requestPort();
+await port.open({ baudRate: 9600 });
+writer = port.writable.getWriter();
+document.getElementById("status").innerText = "✅ 블루투스 연결 완료";
+} catch (e) {
+alert("블루투스 연결 실패: " + e);
+}
+}
+
+
+async function init() {
+const modelURL = MODEL_URL + "model.json";
+const metadataURL = MODEL_URL + "metadata.json";
+
+
+model = await tmImage.load(modelURL, metadataURL);
+maxPredictions = model.getTotalClasses();
+
+
+webcam = new tmImage.Webcam(300, 225, true);
+await webcam.setup();
+await webcam.play();
+window.requestAnimationFrame(loop);
+
+
+document.getElementById("webcam").appendChild(webcam.canvas);
+document.getElementById("status").innerText = "모델 준비 완료";
+}
+
+
+async function loop() {
+webcam.update();
+</html>
